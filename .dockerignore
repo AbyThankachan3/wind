@@ -1,0 +1,12 @@
+# Keep the build context (and image) small: never copy data or local envs in.
+WindData/
+data/
+GIS Files/
+.venv/
+__pycache__/
+*.pyc
+*.part
+.git/
+.gitignore
+docs/
+*.md

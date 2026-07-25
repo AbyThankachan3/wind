@@ -1,0 +1,42 @@
+# Wind pipeline — Docker Compose.
+#
+# Quick start:
+#   1. Edit the volume line below to a host folder with 100+ GB free.
+#   2. docker compose up --build
+#
+# Everything (downloads, intermediate files, final COGs, and the boundary
+# shapefile) is written to that host folder, so it survives restarts and you
+# never re-download files you already have.
+
+services:
+  wind:
+    build: .
+    image: wind-pipeline
+
+    # ---- CHANGE ME ----------------------------------------------------------
+    # Left of the colon = a folder on YOUR machine (needs 100+ GB free).
+    # Right of the colon = /data inside the container (do not change).
+    volumes:
+      - "./data:/data"
+      # Examples:
+      #   - "D:/WindData:/data"            (Windows)
+      #   - "/mnt/bigdisk/wind:/data"      (Linux)
+      #   - "/Users/me/wind-data:/data"    (macOS)
+    # -------------------------------------------------------------------------
+
+    environment:
+      # To process a different country, change ONLY this line (and the output
+      # folder). The shapefile is downloaded automatically and its path is
+      # derived from the country name + WIND_GIS_DIR.
+      WIND_COUNTRY: "Canada"
+      WIND_OUTPUT_ROOT: "/data/WindData/Canada"
+      WIND_GIS_DIR: "/data/gis"
+      WIND_DOWNLOAD_WORKERS: "6"
+      WIND_PROCESS_WORKERS: "6"   # 16GB RAM->1, 32GB->4, 64GB->6
+      # Uncomment to override the defaults:
+      # WIND_YEARS: "2030,2040,2050,2060,2070,2080,2090,2100"
+      # WIND_SSPS: "ssp245,ssp585"
+      
+
+    # The pipeline is a long batch job, not a service: run once and exit.
+    restart: "no"

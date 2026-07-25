@@ -1,0 +1,18 @@
+# Wind pipeline dependencies.
+# Installed automatically by run.bat into a local .venv folder.
+# Python 3.10 or newer recommended.
+
+requests
+beautifulsoup4
+lxml
+
+numpy
+pandas
+xarray
+dask
+netCDF4
+
+geopandas
+rioxarray
+rasterio
+rio-cogeo
