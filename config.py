@@ -57,6 +57,13 @@ def _env_list_str(name, default):
     return [x.strip() for x in v.replace(";", ",").split(",") if x.strip()]
 
 
+def _env_bool(name, default):
+    v = os.environ.get(name)
+    if v in (None, ""):
+        return default
+    return v.strip().lower() in ("1", "true", "yes", "on")
+
+
 # ============================================================
 # EDIT THESE  (defaults for a plain local run)
 # ============================================================
@@ -121,6 +128,12 @@ else:
 
 THRESHOLD_MS = _env_int("WIND_THRESHOLD_MS", 12)
 DOWNLOAD_WORKERS = _env_int("WIND_DOWNLOAD_WORKERS", 6)
+
+# After a successful run, step 06 deletes the regenerable intermediate files
+# (per-model derived layers, the _multimodel combine folder, and the pre-COG
+# multiband results), keeping the raw .nc downloads, the shapefile, and the
+# final COGs. Set WIND_KEEP_INTERMEDIATE=1 to keep everything instead.
+KEEP_INTERMEDIATE = _env_bool("WIND_KEEP_INTERMEDIATE", False)
 
 # Step-02 CPU workers. Each worker loads a full global dataset + the boundary
 # shapefile, so it needs a lot of RAM (~5-8 GB peak). Size this to the machine:

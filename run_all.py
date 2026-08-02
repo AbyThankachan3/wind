@@ -25,6 +25,7 @@ STEPS = [
     ("03-ensemble-derived.py",        "Combine across all models"),
     ("04-multiband-tiff-creation.py", "Stack the layers into multi-band GeoTIFFs"),
     ("05-cog.py",                     "Convert to Cloud-Optimized GeoTIFFs (final output)"),
+    ("06-cleanup.py",                 "Remove regenerable intermediates (keeps raw + COGs)"),
 ]
 
 
