@@ -25,18 +25,25 @@ services:
     # -------------------------------------------------------------------------
 
     environment:
-      # To process a different country, change ONLY this line (and the output
-      # folder). The shapefile is downloaded automatically and its path is
-      # derived from the country name + WIND_GIS_DIR.
+      # ---- WHICH COUNTRIES ----
+      # One country:
       WIND_COUNTRY: "Canada"
-      WIND_OUTPUT_ROOT: "/data/WindData/Canada"
+      # ...or process several in one run (raw data downloaded once, shared):
+      #   WIND_COUNTRIES: "all"            # every registered country (4)
+      #   WIND_COUNTRIES: "Canada,UK"      # a specific list
+      # (If WIND_COUNTRIES is set it takes precedence over WIND_COUNTRY.)
+
+      # ---- PATHS (base folder; per-country paths derive from it) ----
+      WIND_DATA_ROOT: "/data"
       WIND_GIS_DIR: "/data/gis"
+
+      # ---- TUNING ----
       WIND_DOWNLOAD_WORKERS: "6"
-      WIND_PROCESS_WORKERS: "6"   # 16GB RAM->1, 32GB->4, 64GB->6
-      # Uncomment to override the defaults:
+      WIND_PROCESS_WORKERS: "2"   # 16GB RAM->1, 32GB->4, 64GB->6
       # WIND_YEARS: "2030,2040,2050,2060,2070,2080,2090,2100"
       # WIND_SSPS: "ssp245,ssp585"
-      
+      # WIND_KEEP_INTERMEDIATE: "1"   # keep derived/_multimodel instead of deleting
+
 
     # The pipeline is a long batch job, not a service: run once and exit.
     restart: "no"

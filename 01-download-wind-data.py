@@ -29,7 +29,9 @@ import config
 
 BASE_URL = "https://ds.nccs.nasa.gov/thredds/catalog/AMES/NEX/GDDP-CMIP6/"
 
-DOWNLOAD_ROOT = config.OUTPUT_ROOT
+# Shared, country-independent: the raw global NASA files live here once and are
+# reused when clipping to every country (step 02).
+DOWNLOAD_ROOT = config.RAW_DIR
 YEARS = [str(y) for y in config.YEARS]
 SSPS = config.SSPS
 MAX_WORKERS = config.DOWNLOAD_WORKERS

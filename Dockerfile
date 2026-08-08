@@ -26,11 +26,11 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy the pipeline code (data folders are excluded via .dockerignore).
 COPY . .
 
-# All output and the downloaded shapefile live on the mounted /data volume, so
-# nothing large is written into the container's own layer. The shapefile path
-# is derived from WIND_COUNTRY + WIND_GIS_DIR, so a different country only needs
-# WIND_COUNTRY changed (see docker-compose.yml).
-ENV WIND_OUTPUT_ROOT=/data/WindData/Canada \
+# Everything (shared raw downloads, per-country outputs, shapefiles) lives on the
+# mounted /data volume, so nothing large is written into the container's layer.
+# Per-country paths are derived from WIND_COUNTRY + WIND_DATA_ROOT, so processing
+# one or many countries needs no path edits (see docker-compose.yml).
+ENV WIND_DATA_ROOT=/data \
     WIND_GIS_DIR=/data/gis
 
 # Non-interactive: --yes skips the confirmation prompt (no TTY in a container).

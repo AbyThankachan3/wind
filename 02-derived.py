@@ -38,7 +38,9 @@ import config
 # CONFIG (from config.py)
 # =========================================================
 
-BASE_DIR = config.OUTPUT_ROOT
+# Input: shared raw downloads. Output: this country's folder.
+RAW_DIR = config.RAW_DIR
+OUTPUT_ROOT = config.OUTPUT_ROOT
 SHAPEFILE = config.SHAPEFILE
 YEARS = [str(y) for y in config.YEARS]
 THRESHOLD = config.THRESHOLD_MS
@@ -138,7 +140,8 @@ def process_nc_file(nc_file):
             raise ValueError(f"No configured year found in filename: {nc_file}")
 
         # ---- Path components (relative to BASE_DIR, depth-robust) --------
-        rel_parts = os.path.relpath(nc_file, BASE_DIR).split(os.sep)
+        # Parse model/ssp/ensemble from the path within the shared RAW_DIR.
+        rel_parts = os.path.relpath(nc_file, RAW_DIR).split(os.sep)
         if len(rel_parts) < 4:
             raise ValueError(
                 f"Unexpected path layout, expected "
@@ -148,7 +151,8 @@ def process_nc_file(nc_file):
 
         print(f"\nYear: {year}\nModel: {model}\nSSP: {ssp}\nEnsemble: {ensemble}")
 
-        output_dir = os.path.join(BASE_DIR, model, ssp, ensemble, "derived", year)
+        # Derived layers go under THIS country's output root.
+        output_dir = os.path.join(OUTPUT_ROOT, model, ssp, ensemble, "derived", year)
         os.makedirs(output_dir, exist_ok=True)
 
         # ---- Load dataset -------------------------------------------------
@@ -232,7 +236,7 @@ def process_nc_file(nc_file):
 def discover_nc_files():
     files = set()
     for year in YEARS:
-        files.update(glob.glob(f"{BASE_DIR}/**/raw/*{year}*.nc", recursive=True))
+        files.update(glob.glob(f"{RAW_DIR}/**/raw/*{year}*.nc", recursive=True))
     return sorted(files)
 
 

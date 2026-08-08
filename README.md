@@ -29,19 +29,38 @@ All settings live in `config.py` and can be overridden by environment variables
 
 | Env var | Default | Meaning |
 |---|---|---|
-| `WIND_COUNTRY` | `Canada` | **usually the only thing you set.** Drives output folder + which shapefile is downloaded/used |
-| `WIND_OUTPUT_ROOT` | `WindData/<country>` | where everything is written |
-| `WIND_GIS_DIR` | `../GIS Files` | base folder the boundary shapefile lands in |
-| `WIND_SHAPEFILE` | *derived from country* | override only for a custom/unregistered shapefile |
+| `WIND_COUNTRY` | `Canada` | single country to process |
+| `WIND_COUNTRIES` | *(unset)* | process several at once: a list (`Canada,UK`) or `all`. Takes precedence over `WIND_COUNTRY` |
+| `WIND_DATA_ROOT` | next to `config.py` | base folder for all data (Docker: `/data`) |
+| `WIND_GIS_DIR` | `../GIS Files` | base folder the boundary shapefiles land in |
 | `WIND_YEARS` | `2030…2100` | comma-separated years |
 | `WIND_SSPS` | `ssp245,ssp585` | comma-separated scenarios |
 | `WIND_THRESHOLD_MS` | `12` | strong-wind threshold (m/s) |
-| `WIND_DOWNLOAD_WORKERS` / `WIND_PROCESS_WORKERS` | `6` / `2` | parallelism (workers → RAM: 16GB=1, 32GB=4, 64GB=6) |
+| `WIND_PROCESS_WORKERS` | `2` | step-02 CPU workers → RAM: 16GB=1, 32GB=4, 64GB=6 |
+| `WIND_KEEP_INTERMEDIATE` | *(unset)* | `1` keeps derived/`_multimodel` instead of deleting |
+| `WIND_RAW_DIR` / `WIND_OUTPUT_ROOT` / `WIND_SHAPEFILE` | *derived* | advanced path overrides |
 
 You do **not** type a shapefile path: step 00 downloads it and its location is
-derived from `WIND_COUNTRY`. Adding a new country = register its download in
+derived from the country name. Adding a new country = register its download in
 `download_shapefile.py` and its resulting filename in `config.py`
 (`SHAPEFILE_BY_COUNTRY`).
+
+### Multiple countries in one run
+
+The raw NASA data is **global**, so it's downloaded **once** into a shared
+`raw_nc/` folder and clipped to each country — processing many countries does
+**not** re-download it.
+
+```bash
+WIND_COUNTRIES=all docker compose run --rm wind python run_all.py --yes
+```
+
+`run_all.py` then downloads once, then loops the countries doing only
+clip→stats→COG for each. Preview the plan without downloading anything:
+
+```bash
+python run_all.py --dry-run
+```
 
 ---
 

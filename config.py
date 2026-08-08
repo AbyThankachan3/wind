@@ -73,16 +73,33 @@ def _env_bool(name, default):
 #    is derived from this name (see SHAPEFILE below) -- you do not type a path.
 COUNTRY = _env("WIND_COUNTRY", "Canada")
 
+# 1b) Process SEVERAL countries in one run (no need to change COUNTRY each time).
+#     WIND_COUNTRIES="Canada,UK"  -> that list
+#     WIND_COUNTRIES="all"        -> every registered country (keys of
+#                                    SHAPEFILE_BY_COUNTRY below)
+#     unset                       -> just the single COUNTRY above
+#     The global NASA data is downloaded ONCE and shared across all of them
+#     (see RAW_DIR), so more countries does NOT mean re-downloading.
+_countries_env = os.environ.get("WIND_COUNTRIES")
+
 # 2) Which future years to process.
 YEARS = _env_list_int("WIND_YEARS", [2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100])
 
 # 3) Which emissions scenarios to process.
 SSPS = _env_list_str("WIND_SSPS", ["ssp245", "ssp585"])
 
-# 4) Where to store EVERYTHING. Each country gets its own folder.
+# 4) Base folder for ALL data (downloads + outputs). Native default: next to
+#    this file. Docker sets WIND_DATA_ROOT=/data (the mounted volume).
+DATA_ROOT = _resolve(_env("WIND_DATA_ROOT", "."))
+
+# 5) Shared raw NASA downloads (the big ~160 GB). ONE copy, reused by every
+#    country -- this is what makes multi-country runs not re-download.
+RAW_DIR = _resolve(_env("WIND_RAW_DIR", os.path.join(DATA_ROOT, "raw_nc")))
+
+# 6) Per-country outputs. Each country gets its own folder so they never mix.
 OUTPUT_ROOT = _resolve(_env(
     "WIND_OUTPUT_ROOT",
-    os.path.join("WindData", COUNTRY),
+    os.path.join(DATA_ROOT, "WindData", COUNTRY),
 ))
 
 
@@ -103,6 +120,15 @@ SHAPEFILE_BY_COUNTRY = {
     "UK":        "UK/CTRY_DEC_2024_UK_BUC.shp",
     "Australia": "Australia/STE_2021_AUST_GDA2020.shp",
 }
+
+# The list of countries a single `run_all.py` will process (see WIND_COUNTRIES).
+if _countries_env and _countries_env.strip().lower() == "all":
+    COUNTRIES = list(SHAPEFILE_BY_COUNTRY.keys())
+elif _countries_env:
+    COUNTRIES = [c.strip() for c in _countries_env.replace(";", ",").split(",")
+                 if c.strip()]
+else:
+    COUNTRIES = [COUNTRY]
 
 # Base folder the boundary shapefiles live in (override with WIND_GIS_DIR, e.g.
 # "/data/gis" inside Docker).
@@ -151,10 +177,11 @@ CRS = "EPSG:4326"
 
 def summary_lines():
     return [
-        f"Country     : {COUNTRY}",
+        f"Countries   : {', '.join(COUNTRIES)}",
         f"Years       : {YEARS}",
         f"Scenarios   : {SSPS}",
         f"Threshold   : {THRESHOLD_MS} m/s",
+        f"Shared raw  : {RAW_DIR}",
         f"Shapefile   : {SHAPEFILE}",
         f"Output root : {OUTPUT_ROOT}",
     ]
