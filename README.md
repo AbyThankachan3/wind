@@ -99,6 +99,30 @@ summary and waits for you to press Enter before the large download.
 > Docker is recommended over this: it packages the GDAL/geospatial libraries so
 > a dependency can't fail to install on your machine (which it can, natively).
 
+## Run it — cloud VM (GCP / EC2), no Docker
+
+`run_gcp.sh` is the native path with the VM parts handled: it installs the two
+system libraries the wheels need, points all data at an attached disk, sizes
+the step-02 workers from the machine's RAM, checks free space, and warns if you
+aren't in `tmux`. It then hands over to `run.sh`.
+
+```bash
+chmod +x run_gcp.sh                     # once
+DATA_DIR=/mnt/disks/winddata ./run_gcp.sh --dry-run   # check the plan
+tmux new -s wind                        # the run takes hours
+DATA_DIR=/mnt/disks/winddata ./run_gcp.sh --yes
+```
+
+Edit the defaults at the top of the script (`DATA_DIR`, `WIND_COUNTRIES`) or
+override them per-run as environment variables, as above. Any `WIND_*` variable
+you export yourself wins — e.g. `WIND_PROCESS_WORKERS=4` overrides the
+RAM-based sizing.
+
+Sizing the VM: attach a **separate persistent disk of 250 GB+** (the raw NASA
+download is ~150 GB and is kept after cleanup — don't use the boot disk), and
+prefer RAM over vCPUs, since each step-02 worker holds a full global dataset
+(~5–8 GB peak). A 64 GB high-memory machine runs 6 workers comfortably.
+
 ---
 
 ## Heads-up before the first run
@@ -157,6 +181,7 @@ A download log is written to `<data>/WindData/<Country>/manifests/download_manif
 config.py                 # single source of settings (+ env overrides)
 run_all.py                # orchestrator (steps 00–05)
 run.bat / run.sh          # native launchers (create venv, install, run)
+run_gcp.sh                # cloud-VM launcher (data disk + RAM sizing, no Docker)
 Dockerfile                # slim Python image
 docker-compose.yml        # data volume mount + env config
 download_shapefile.py     # step 00: boundary shapefile registry + fetch
