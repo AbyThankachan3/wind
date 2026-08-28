@@ -17,12 +17,19 @@ been run end-to-end here — the first use of a new country should be watched.
 
 import os
 import sys
+import time
 import zipfile
 import tempfile
 
 import requests
 
 import config
+
+
+# ArcGIS Hub exports are built on demand: a cold item answers "Pending" until
+# the zip is ready, so do_arcgis polls rather than failing on the first miss.
+ARCGIS_POLL_SECONDS = 5
+ARCGIS_EXPORT_TIMEOUT = 300
 
 
 # =========================================================
@@ -180,15 +187,32 @@ def do_arcgis(entry, dest_dir):
     item = entry["item_id"]
     api = (f"https://hub.arcgis.com/api/download/v1/items/{item}/shapefile"
            f"?redirect=false&layers=0")
+    # ArcGIS Hub builds the export asynchronously: the first call starts the job
+    # and answers {"status": "Pending"} with no resultUrl. Only a warm cache
+    # answers "Completed" immediately, so poll until the export is ready
+    # instead of treating a missing resultUrl as failure.
     print("Resolving ArcGIS download url...")
-    try:
-        result_url = requests.get(api, timeout=60).json().get("resultUrl")
-    except Exception as e:
-        print(f"  [error] could not resolve ArcGIS item: {e}")
-        return False
-    if not result_url:
-        print("  [error] ArcGIS returned no download url.")
-        return False
+    result_url = None
+    deadline = time.time() + ARCGIS_EXPORT_TIMEOUT
+    while True:
+        try:
+            payload = requests.get(api, timeout=60).json()
+        except Exception as e:
+            print(f"  [error] could not resolve ArcGIS item: {e}")
+            return False
+        result_url = payload.get("resultUrl")
+        status = payload.get("status", "unknown")
+        if result_url:
+            break
+        if status in ("Failed", "ExportError"):
+            print(f"  [error] ArcGIS export failed: {payload.get('message', status)}")
+            return False
+        if time.time() >= deadline:
+            print(f"  [error] ArcGIS export still '{status}' after "
+                  f"{ARCGIS_EXPORT_TIMEOUT}s -- giving up.")
+            return False
+        print(f"  export {status}; waiting {ARCGIS_POLL_SECONDS}s...")
+        time.sleep(ARCGIS_POLL_SECONDS)
     tmp = os.path.join(dest_dir, "_download.zip")
     print(f"Downloading: {result_url}")
     if not download(result_url, tmp):
