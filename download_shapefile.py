@@ -79,7 +79,8 @@ SOURCES = {
 
     # ---- Middle East: government-sourced via UN OCHA COD-AB (untested) ----
     "UAE": {"strategy": "zip", "url": "https://data.humdata.org/dataset/23d41c1f-41ef-4957-a47e-b8c08c984d83/resource/8e3dce55-76e9-4ea1-a4d9-93eccdc4b66d/download/are_admin_boundaries.shp.zip", "source": "UAE Federal Competitiveness and Statistics Centre (via COD-AB)"},
-    "Qatar": {"strategy": "zip", "url": "https://data.humdata.org/dataset/6a84f3b8-41cd-4769-a61f-6dbd5f61bd05/resource/2345dd03-d14f-4038-9e96-8c235056d25f/download/qat_adm_psa_20240627_ab_shp.zip", "source": "Qatar Planning and Statistics Authority (via COD-AB)"},
+    "Qatar": {"strategy": "zip", "url": "https://data.humdata.org/dataset/6a84f3b8-41cd-4769-a61f-6dbd5f61bd05/resource/5e996f7c-42b5-4335-871c-3a78ffb158f7/download/qat_admin_boundaries.shp.zip", "source": "Qatar Planning and Statistics Authority (via COD-AB)"},
+    "Singapore": {"strategy": "datagovsg", "dataset_id": "d_bf4d24df9129d5a8ff8cf82e20959ee0", "source": "Singapore URA Master Plan 2019 Region Boundary (data.gov.sg)"},
     "Egypt": {"strategy": "zip", "url": "https://data.humdata.org/dataset/b90d81ba-7c7a-4283-9899-827480d80a79/resource/6115d7e5-4ba4-451d-988e-f791f4716e7a/download/egy_admin_boundaries.shp.zip", "source": "Egypt CAPMAS (via COD-AB)"},
     "Iraq": {"strategy": "zip", "url": "https://data.humdata.org/dataset/488bb3cd-3ce9-49d3-862a-3ce7975c63e1/resource/1d1ed1f3-a295-47b6-800d-356dc1036731/download/irq_admin_boundaries.shp.zip", "source": "Iraq Central Statistics Office (via COD-AB)"},
     "Yemen": {"strategy": "zip", "url": "https://data.humdata.org/dataset/6b2656e2-b915-4671-bfed-468d5edcd80a/resource/eb58b807-bea0-450f-a654-0fa49054b4e0/download/yem_admin_boundaries.shp.zip", "source": "Yemen Central Statistical Organization (via COD-AB)"},
@@ -223,6 +224,21 @@ def do_arcgis(entry, dest_dir):
     return True
 
 
+def do_datagovsg(entry, dest_dir):
+    """data.gov.sg: resolve the dataset's temporary download URL, then save the
+    GeoJSON directly to the target path (geopandas reads GeoJSON fine)."""
+    ds = entry["dataset_id"]
+    api = f"https://api-open.data.gov.sg/v1/public/api/datasets/{ds}/poll-download"
+    print("Resolving data.gov.sg download url...")
+    try:
+        url = requests.get(api, timeout=60).json()["data"]["url"]
+    except Exception as e:
+        print(f"  [error] could not resolve data.gov.sg download: {e}")
+        return False
+    print(f"Downloading: {url[:80]}...")
+    return download(url, config.SHAPEFILE)
+
+
 def print_manual(country, entry, dest_dir):
     print("\n" + "-" * 60)
     print(f"'{country}' cannot be downloaded automatically.")
@@ -280,6 +296,8 @@ def main():
         ok = do_nested_zip(entry, dest_dir)
     elif strategy == "arcgis":
         ok = do_arcgis(entry, dest_dir)
+    elif strategy == "datagovsg":
+        ok = do_datagovsg(entry, dest_dir)
     else:
         print(f"[ERROR] Unknown strategy '{strategy}'.")
         sys.exit(1)

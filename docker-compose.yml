@@ -26,12 +26,12 @@ services:
 
     environment:
       # ---- WHICH COUNTRIES ----
-      # One country:
-      WIND_COUNTRY: "Canada"
-      # ...or process several in one run (raw data downloaded once, shared):
-      #   WIND_COUNTRIES: "all"            # every registered country (4)
-      #   WIND_COUNTRIES: "Canada,UK"      # a specific list
-      # (If WIND_COUNTRIES is set it takes precedence over WIND_COUNTRY.)
+      # "all" = every ACTIVE country in config.py's SHAPEFILE_BY_COUNTRY,
+      # which is currently: UAE, Qatar, Singapore. (Canada/EU/UK/Australia are
+      # done and commented out there, so they are not reprocessed.)
+      WIND_COUNTRIES: "all"
+      # Or a specific list:  WIND_COUNTRIES: "UAE,Qatar"
+      # Single country:      WIND_COUNTRY: "UAE"   (ignored if WIND_COUNTRIES set)
 
       # ---- PATHS (base folder; per-country paths derive from it) ----
       WIND_DATA_ROOT: "/data"

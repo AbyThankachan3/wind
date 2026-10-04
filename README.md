@@ -29,8 +29,8 @@ All settings live in `config.py` and can be overridden by environment variables
 
 | Env var | Default | Meaning |
 |---|---|---|
-| `WIND_COUNTRY` | `Canada` | single country to process |
-| `WIND_COUNTRIES` | *(unset)* | process several at once: a list (`Canada,UK`) or `all`. Takes precedence over `WIND_COUNTRY` |
+| `WIND_COUNTRY` | `UAE` | single country to process |
+| `WIND_COUNTRIES` | *(unset)* | process several at once: a list (`UAE,Qatar`) or `all` (= active countries in `SHAPEFILE_BY_COUNTRY`). Takes precedence over `WIND_COUNTRY` |
 | `WIND_DATA_ROOT` | next to `config.py` | base folder for all data (Docker: `/data`) |
 | `WIND_GIS_DIR` | `../GIS Files` | base folder the boundary shapefiles land in |
 | `WIND_YEARS` | `2030…2100` | comma-separated years |
