@@ -71,7 +71,7 @@ def _env_bool(name, default):
 # 1) Which country to process. FOR MOST RUNS THIS IS THE ONLY THING YOU SET.
 #    The boundary shapefile is downloaded automatically (step 00) and its path
 #    is derived from this name (see SHAPEFILE below) -- you do not type a path.
-COUNTRY = _env("WIND_COUNTRY", "UAE")
+COUNTRY = _env("WIND_COUNTRY", "Singapore")
 
 # 1b) Process SEVERAL countries in one run (no need to change COUNTRY each time).
 #     WIND_COUNTRIES="Canada,UK"  -> that list
@@ -116,13 +116,13 @@ OUTPUT_ROOT = _resolve(_env(
 # resulting "<subfolder>/<file>.shp" here.
 SHAPEFILE_BY_COUNTRY = {
     # ---- ACTIVE: processed on the next run (WIND_COUNTRIES=all = these) ----
-    "UAE":       "UAE/are_admin0.shp",
-    "Qatar":     "Qatar/qat_admin0.shp",
     "Singapore": "Singapore/sg_region_boundary.geojson",
 
     # ---- DONE (already generated) -- commented so they are NOT reprocessed.
     #      Uncomment to run again. The shared raw data is kept, so re-enabling
     #      one does not re-download anything.
+    # "UAE":       "UAE/are_admin0.shp",
+    # "Qatar":     "Qatar/qat_admin0.shp",
     # "Canada":    "Canada/lpr_000b21a_e.shp",
     # "EU":        "EU/NUTS_RG_01M_2021_4326_LEVL_0.shp",
     # "UK":        "UK/CTRY_DEC_2024_UK_BUC.shp",
