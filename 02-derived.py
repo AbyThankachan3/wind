@@ -102,11 +102,18 @@ def detect_time_unit(time_values):
     return "step", "steps", median_days
 
 
-def export_raster(da, path, layer_name, model, ssp, ensemble, year, threshold=None):
+def export_raster(da, path, layer_name, model, ssp, ensemble, year,
+                  threshold=None, transform=None):
     """Re-assert CRS, spatial dims and NoData, then write a GeoTIFF."""
     da = da.astype("float32")
     da = da.rio.write_crs(CRS)
     da = da.rio.set_spatial_dims(x_dim="lon", y_dim="lat")
+    # Some reductions (notably .quantile) drop the spatial transform, and for a
+    # 1-pixel clip it cannot be recovered from the single coordinate -> the file
+    # would be written with the identity transform. Re-assert the known clip
+    # transform so every layer is georeferenced the same way.
+    if transform is not None:
+        da = da.rio.write_transform(transform)
     da = da.rio.write_nodata(np.float32(np.nan))
     da.attrs.update({
         "layer_name": layer_name,
@@ -180,6 +187,9 @@ def process_nc_file(nc_file):
         print("Clipping raster...")
         clipped = wind.rio.clip(_WORKER_GDF.geometry, _WORKER_GDF.crs, drop=True)
         print(f"Clipped shape: {clipped.shape}")
+        # Captured here (valid even for a 1-pixel clip); re-applied on export
+        # because some reductions drop the transform.
+        grid_transform = clipped.rio.transform()
 
         spatial_mask = clipped.notnull().any(dim="time")
 
@@ -202,11 +212,12 @@ def process_nc_file(nc_file):
             output_dir, f"threshold_{THRESHOLD}ms_{unit_plural}_{year}.tif"
         )
 
-        export_raster(mean_wind, mean_path, "mean_wind", model, ssp, ensemble, year)
-        export_raster(max_wind, max_path, "extreme_wind", model, ssp, ensemble, year)
-        export_raster(p95_wind, p95_path, "p95_wind", model, ssp, ensemble, year)
+        export_raster(mean_wind, mean_path, "mean_wind", model, ssp, ensemble, year, transform=grid_transform)
+        export_raster(max_wind, max_path, "extreme_wind", model, ssp, ensemble, year, transform=grid_transform)
+        export_raster(p95_wind, p95_path, "p95_wind", model, ssp, ensemble, year, transform=grid_transform)
         export_raster(threshold_count, threshold_path, "threshold_exceedance",
-                      model, ssp, ensemble, year, threshold=THRESHOLD)
+                      model, ssp, ensemble, year, threshold=THRESHOLD,
+                      transform=grid_transform)
 
         stats = {
             "model": model, "ssp": ssp, "ensemble": ensemble, "year": year,

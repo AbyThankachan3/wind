@@ -216,6 +216,11 @@ def combine_group(group_df, metric, ssp, year, out_dir):
         x_dim = "x" if "x" in da.dims else "lon"
         y_dim = "y" if "y" in da.dims else "lat"
         da = da.rio.set_spatial_dims(x_dim=x_dim, y_dim=y_dim)
+        # Re-assert the reference grid's transform: cross-model reductions can
+        # drop it, and for a 1-pixel country it cannot be recomputed from the
+        # single coordinate (it would otherwise write an identity transform and
+        # break the stack step). ref_da keeps a valid transform.
+        da = da.rio.write_transform(ref_da.rio.transform())
         nodata_value = np.nan if dtype == "float32" else -9999
         da = da.rio.write_nodata(nodata_value)
         da.encoding.clear()
